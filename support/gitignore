@@ -39,3 +39,7 @@ CPPLINT.cfg
 .deps/
 .libs/
 *-stamp
+
+# Directories created by IDEs
+.idea
+.vscode
