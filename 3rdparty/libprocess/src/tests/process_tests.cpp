@@ -1449,6 +1449,12 @@ TEST_F(ProcessTest, Remote)
   EXPECT_CALL(process, handler(_, _))
     .WillOnce(FutureSatisfy(&handler));
 
+  Future<UPID> pid;
+  Future<string> body;
+  EXPECT_CALL(process, handler(_, _))
+    .WillOnce(DoAll(FutureArg<0>(&pid),
+                    FutureArg<1>(&body)));
+
   Try<Socket> create = Socket::create();
   ASSERT_SOME(create);
 
@@ -1463,12 +1469,19 @@ TEST_F(ProcessTest, Remote)
   message.name = "handler";
   message.from = UPID("sender", sender.get());
   message.to = process.self();
+  message.body = "hello world";
 
   const string data = MessageEncoder::encode(message);
 
   AWAIT_READY(socket.send(data));
 
   AWAIT_READY(handler);
+
+  AWAIT_READY(body);
+  ASSERT_EQ("hello world", body.get());
+
+  AWAIT_READY(pid);
+  ASSERT_EQ(message.from, pid.get());
 
   terminate(process);
   wait(process);
